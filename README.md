@@ -1,6 +1,6 @@
 # hermes-provider-anyrouter
 
-[![lint-test](https://github.com/anyrouter-dev/hermes-provider-anyrouter/actions/workflows/lint-test.yaml/badge.svg)](https://github.com/anyrouter-dev/hermes-provider-anyrouter/actions/workflows/lint-test.yaml)
+[![lint-test](https://github.com/AnyRouterHQ/hermes-provider-anyrouter/actions/workflows/lint-test.yaml/badge.svg)](https://github.com/AnyRouterHQ/hermes-provider-anyrouter/actions/workflows/lint-test.yaml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Use [AnyRouter](https://anyrouter.dev) as a model provider in
@@ -19,10 +19,10 @@ registry.
 hermes plugins install anyrouter
 
 # From git
-hermes plugins install https://github.com/anyrouter-dev/hermes-provider-anyrouter --subdir anyrouter
+hermes plugins install https://github.com/AnyRouterHQ/hermes-provider-anyrouter --subdir anyrouter
 
 # As a pip package (found through the hermes_agent.plugins entry point)
-pip install git+https://github.com/anyrouter-dev/hermes-provider-anyrouter.git
+pip install git+https://github.com/AnyRouterHQ/hermes-provider-anyrouter.git
 ```
 
 Check it:
@@ -136,7 +136,7 @@ covered.
 - AnyRouter MCP server (`list_models`, `get_credits`, key management from your
   agent): `https://anyrouter.dev/api/v1/mcp`. Add it under `mcp_servers` in
   `~/.hermes/config.yaml`.
-- Issues: <https://github.com/anyrouter-dev/hermes-provider-anyrouter/issues>
+- Issues: <https://github.com/AnyRouterHQ/hermes-provider-anyrouter/issues>
 
 ## License
 

@@ -28,8 +28,8 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/anyrouter-dev/hermes-provider-anyrouter"
-Issues = "https://github.com/anyrouter-dev/hermes-provider-anyrouter/issues"
+Homepage = "https://github.com/AnyRouterHQ/hermes-provider-anyrouter"
+Issues = "https://github.com/AnyRouterHQ/hermes-provider-anyrouter/issues"
 AnyRouter = "https://anyrouter.dev"
 
 # Hermes discovers pip-installed providers through this group. A bare module
