@@ -9,7 +9,7 @@ description = "AnyRouter model-provider plugin for Hermes Agent"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
-authors = [{ name = "duyet" }]
+authors = [{ name = "AnyRouter" }]
 keywords = [
     "hermes-agent",
     "hermes-plugin",
@@ -28,8 +28,8 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/duyet/hermes-provider-anyrouter"
-Issues = "https://github.com/duyet/hermes-provider-anyrouter/issues"
+Homepage = "https://github.com/anyrouter-dev/hermes-provider-anyrouter"
+Issues = "https://github.com/anyrouter-dev/hermes-provider-anyrouter/issues"
 AnyRouter = "https://anyrouter.dev"
 
 # Hermes discovers pip-installed providers through this group. A bare module

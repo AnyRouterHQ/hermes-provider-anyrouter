@@ -1,153 +1,143 @@
 # hermes-provider-anyrouter
 
-[AnyRouter](https://anyrouter.dev) model-provider plugin for
-[Hermes Agent](https://github.com/NousResearch/hermes-agent).
+[![lint-test](https://github.com/anyrouter-dev/hermes-provider-anyrouter/actions/workflows/lint-test.yaml/badge.svg)](https://github.com/anyrouter-dev/hermes-provider-anyrouter/actions/workflows/lint-test.yaml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-It registers AnyRouter as the `anyrouter` provider over its OpenAI-compatible
-Chat Completions endpoint (`https://anyrouter.dev/api/v1`), and keeps the
-`/model` picker filtered to routes that can actually call tools. It touches
-no Hermes core files — discovery, credential resolution, `hermes doctor`, and
-the `--provider` flag all auto-wire from the provider registry.
+Use [AnyRouter](https://anyrouter.dev) as a model provider in
+[Hermes Agent](https://github.com/NousResearch/hermes-agent). One API key, any
+model, with routing and fallback handled by AnyRouter.
 
-Part of the Hermes plugin ecosystem: install it from the plugin catalog, from
-git, or via pip — no core files required.
-
-## What it does
-
-- **Tool-capable picker filtering.** AnyRouter's public `/api/v1/models`
-  catalog annotates each route with a `capabilities` list; the plugin keeps
-  only routes advertising `function-calling`/`tools`, so the picker never
-  offers a model the agent can't drive. Falls back to the generic `/v1/models`
-  path if the catalog is unreachable or a custom `ANYROUTER_BASE_URL` points
-  at a relay whose catalog isn't ours to interpret.
-- **Request shaping** matching AnyRouter's documented API contract:
-  - `extra_body.session_id` — sticky-session grouping in the Request Logs
-    dashboard.
-  - `extra_body.provider` — request-level routing preferences
-    (`only` / `ignore` / `order` / `sort` / `allow_fallbacks` / `max_price`).
-  - `extra_body.reasoning` — reasoning effort passthrough; AnyRouter
-    translates it to each upstream's native thinking control.
-- **First-party meta-models** like `anyrouter/hermes` (auto-routes across top
-  tool-calling models with fallback) are surfaced alongside `vendor/model`
-  routes like `x-ai/grok-4.7` and `moonshotai/kimi-k3`.
-- **Per-request cost estimates** for first-party `anyrouter/*` meta-models,
-  from the `pricing.input_per_1m` / `output_per_1m` rates in the catalog.
-  The catalog (ids and pricing) is cached per API key when the model list
-  is fetched, so cost lookups never touch the network. Upstream slugs, and
-  models not yet in the cache, fall back to Hermes' generic pricing.
-  Meta-models bill each hop at the underlying model's rate, so the figure is
-  an estimate, not an invoice.
-- **Privacy-respecting by default.** App-attribution headers are opt-in only
-  (`ANYROUTER_APP_ATTRIBUTION=1`) — nothing is tagged unless you ask for it.
-
-## Requirements
-
-- Hermes Agent — any build with the model-provider plugin system
-  (`providers.register_provider` + `providers.base.ProviderProfile`).
-  Verified on 0.21.5.
-- An AnyRouter API key — get one at <https://anyrouter.dev>.
+The plugin registers `anyrouter` over AnyRouter's OpenAI-compatible endpoint
+(`https://anyrouter.dev/api/v1`). It touches no Hermes core files: discovery,
+credentials, `hermes doctor` and `--provider` all wire up from the provider
+registry.
 
 ## Install
 
-Pick one of three install paths:
-
 ```bash
-# 1. From the Hermes plugin catalog:
+# From the Hermes plugin catalog (recommended)
 hermes plugins install anyrouter
 
-# 2. Straight from git:
-hermes plugins install https://github.com/duyet/hermes-provider-anyrouter --subdir anyrouter
+# From git
+hermes plugins install https://github.com/anyrouter-dev/hermes-provider-anyrouter --subdir anyrouter
 
-# 3. As a pip package (picked up via the hermes_agent.plugins entry point):
-pip install git+https://github.com/duyet/hermes-provider-anyrouter.git
+# As a pip package (found through the hermes_agent.plugins entry point)
+pip install git+https://github.com/anyrouter-dev/hermes-provider-anyrouter.git
 ```
 
-Verify it's registered:
+Check it:
 
 ```bash
-hermes plugins list          # should show `anyrouter`, enabled
-hermes doctor                # provider health check
+hermes plugins list    # `anyrouter` should be listed and enabled
+hermes doctor          # provider health check
 ```
 
-## Configure
+## Quick start
 
-Add your API key to `~/.hermes/.env`:
+1. Get an API key at <https://anyrouter.dev>.
+2. Add it to `~/.hermes/.env`:
 
-```
-ANYROUTER_API_KEY=sk-ar-...
-```
+   ```
+   ANYROUTER_API_KEY=sk-ar-...
+   ```
+
+3. Pick a model:
+
+   ```bash
+   hermes model                                    # interactive picker, choose anyrouter
+   hermes --provider anyrouter -m anyrouter/hermes
+   ```
+
+   Or make it the default in `~/.hermes/config.yaml`:
+
+   ```yaml
+   model:
+     provider: anyrouter
+     default: anyrouter/hermes
+   ```
+
+## Configuration
 
 | Variable | Required | Purpose |
 |---|---|---|
-| `ANYROUTER_API_KEY` | yes | AnyRouter API key |
-| `ANYROUTER_BASE_URL` | no | Override the default endpoint (proxy / self-hosted relay) |
-| `ANYROUTER_APP_ATTRIBUTION` | no | `1` opts in to app-attribution headers crediting Hermes traffic in AnyRouter's public app rankings |
+| `ANYROUTER_API_KEY` | yes | Your AnyRouter API key |
+| `ANYROUTER_BASE_URL` | no | Override the endpoint (proxy or self-hosted relay) |
+| `ANYROUTER_APP_ATTRIBUTION` | no | Set to `1` to send app-attribution headers, so Hermes traffic is credited in AnyRouter's public app rankings. Off by default. |
 
-## Use
-
-```bash
-hermes model                                   # interactive picker → anyrouter
-hermes --provider anyrouter -m anyrouter/hermes
-```
-
-Or set it as your default in `~/.hermes/config.yaml`:
-
-```yaml
-model:
-  provider: anyrouter
-  default: anyrouter/hermes
-```
-
-### Recommended models
+## Models
 
 | Model | Notes |
 |---|---|
-| `anyrouter/hermes` | Meta-model auto-routing across top tool-calling models, with fallback — a good default for agentic work |
-| `anyrouter/auto` | Auto-routes across coding/vision-capable models |
-| `x-ai/grok-4.7` | Direct vendor route |
-| `moonshotai/kimi-k3` | 1M context, agentic |
-| `deepseek/deepseek-v4-flash` | Fast, reasoning-capable |
+| `anyrouter/hermes` | Auto-routes across top tool-calling models, with fallback. Best default for agents. |
+| `anyrouter/auto` | Auto-routes across coding and vision-capable models. |
+| `x-ai/grok-4.7` | Direct vendor route. |
+| `moonshotai/kimi-k3` | 1M context, agentic. |
+| `deepseek/deepseek-v4-flash` | Fast, reasoning-capable. |
 
-Run `hermes model` to see the live filtered list — it's read fresh from the
-AnyRouter catalog, so new tool-capable routes appear automatically.
+`hermes model` always shows the live list, read from the AnyRouter catalog.
+
+## Features
+
+- **Tool-capable picker.** Only routes that advertise `function-calling` or
+  `tools` in AnyRouter's `/api/v1/models` catalog are offered. If the catalog
+  is unreachable, or `ANYROUTER_BASE_URL` points at a relay, the plugin falls
+  back to the generic `/v1/models` list.
+- **Request shaping** to AnyRouter's API contract:
+  - `extra_body.session_id`: sticky sessions in the Request Logs dashboard.
+  - `extra_body.provider`: routing preferences (`only`, `ignore`, `order`,
+    `sort`, `allow_fallbacks`, `max_price`).
+  - `extra_body.reasoning`: reasoning effort, translated to each upstream's
+    native thinking control.
+- **Cost estimates** for `anyrouter/*` meta-models, from catalog pricing
+  (`input_per_1m` / `output_per_1m`). The catalog is cached per API key when
+  the model list is fetched, so cost lookups never hit the network. Other
+  models use Hermes' generic pricing. Meta-models bill each hop at the
+  underlying model's rate, so the figure is an estimate, not an invoice.
+- **No tagging unless you opt in.** Attribution headers are off by default.
+
+## Requirements
+
+- Hermes Agent with the model-provider plugin system
+  (`providers.register_provider` and `providers.base.ProviderProfile`).
+  Verified on 0.21.5.
+- Python 3.11+ when installed with pip.
+
+There is no Hermes version pin. Every contact point with core
+(`_supported_kwargs`, `_inherited_fetch`, `hermes_cli.urllib_security`,
+`agent.usage_pricing.CostResult`) is resolved by introspection: newer fields
+are used when present and skipped on older builds.
 
 ## Troubleshooting
 
 | Symptom | Check |
 |---|---|
-| `unknown provider: anyrouter` | `hermes plugins list` — is the plugin enabled? New sessions pick it up after enable. |
-| `Model 'x' not found` | Run `hermes model` — the picker shows only routes AnyRouter currently serves with tool-calling support. |
-| Catalog unreachable | The picker falls back to a built-in model list; check your network / `ANYROUTER_BASE_URL`. |
-| Upstream 429/402 errors | AnyRouter's upstreams are rate-limited or out of credits — retry later or pick a different model; check `GET /api/v1/models`. |
+| `unknown provider: anyrouter` | Run `hermes plugins list` and make sure the plugin is enabled. New sessions pick it up. |
+| `Model 'x' not found` | Run `hermes model`. The picker lists only routes AnyRouter serves with tool-calling. |
+| Catalog unreachable | The picker uses a built-in model list. Check your network and `ANYROUTER_BASE_URL`. |
+| Upstream 429 or 402 | The upstream is rate-limited or out of credits. Retry, or pick another model. |
 
-Logs live under `~/.hermes/logs/` — `hermes logs --follow` is the quickest
-way to watch a request go through.
-
-## Hermes version
-
-There is no version pin. Every contact point with core
-(`_supported_kwargs`, `_inherited_fetch`, `hermes_cli.urllib_security`,
-`agent.usage_pricing.CostResult`) is
-resolved by introspection, so newer profile fields are used when present and
-skipped on older builds.
+Logs are in `~/.hermes/logs/`; `hermes logs --follow` shows requests live.
 
 ## Development
 
 ```bash
+pip install -e . ruff==0.17.0
+ruff check anyrouter tests && ruff format --check anyrouter tests
 python -m unittest discover -s tests -v
 ```
 
-The tests run fully offline: `tests/conftest_stub.py` stubs the Hermes
-`providers` runtime, including a legacy profile base, so both modern and
-older Hermes builds are exercised.
+Tests run offline. `tests/conftest_stub.py` stubs the Hermes `providers`
+runtime, including a legacy profile base, so modern and older builds are both
+covered.
 
 ## Links
 
-- AnyRouter docs: <https://docs.anyrouter.dev>
-- AnyRouter MCP server (`list_models`, `get_credits`, key management inside
-  your agent): `https://anyrouter.dev/api/v1/mcp` — add it under
-  `mcp_servers` in `~/.hermes/config.yaml`
+- Docs: <https://docs.anyrouter.dev/guides/hermes-agent>
+- AnyRouter MCP server (`list_models`, `get_credits`, key management from your
+  agent): `https://anyrouter.dev/api/v1/mcp`. Add it under `mcp_servers` in
+  `~/.hermes/config.yaml`.
+- Issues: <https://github.com/anyrouter-dev/hermes-provider-anyrouter/issues>
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
